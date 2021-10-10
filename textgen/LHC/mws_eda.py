@@ -17,14 +17,16 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, LSTM
 from keras.utils import np_utils
 from keras.callbacks import ModelCheckpoint
+from keras import backend as K
 import nltk
 nltk.download('stopwords')
 import pickle
 
+optimizer = keras.optimizers.Adam(lr=0.01)
+
 # read in the training dataset
 url = "https://raw.githubusercontent.com/JoshSilverb/mdst_nlp_2021/master/data/train.csv"
 df_all = pd.read_csv(url)
-print(df_all.head(3))
 options = ['MWS']
 df = df_all.loc[df_all['author'].isin(options)]
 
@@ -97,7 +99,7 @@ model.add(LSTM(128))
 model.add(Dropout(0.2))
 model.add(Dense(y.shape[1], activation='softmax'))
 
-model.compile(loss='categorical_crossentropy', optimizer='adam')
+model.compile(loss='categorical_crossentropy', optimizer=optimizer)
 
 #Saved as filepath
 filepath = "model_weights_saved.hdf5"
@@ -105,6 +107,10 @@ checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only
 desired_callbacks = [checkpoint]
 
 model.fit(X, y, epochs=4, batch_size=256, callbacks=desired_callbacks)
+
+#Chage learning rate mid training
+#K.set_value(model.optimizer.learning_rate, 0.001)
+#model.fit(X, y, epochs=4, batch_size=256, callbacks=desired_callbacks)
 
 #Loads file name
 filename = "model_weights_saved.hdf5"

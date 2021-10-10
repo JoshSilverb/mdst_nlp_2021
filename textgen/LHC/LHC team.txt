@@ -12,9 +12,8 @@ https://stackabuse.com/text-generation-with-python-and-tensorflow-keras/
 Epoch
 Add Layers
 Change layer size
-Batch size (seq len)
+Batch size
 One hot-encoding the inputs
 Padding input sequences
 
-Model checkpoint
 
