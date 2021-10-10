@@ -4,3 +4,15 @@ hi :)
 lucy
 harrison
 caroline
+
+
+
+TODO:
+https://stackabuse.com/text-generation-with-python-and-tensorflow-keras/
+Epoch
+Add Layers
+Change layer size
+Batch size (seq len)
+One hot-encoding the inputs
+Padding input sequences
+

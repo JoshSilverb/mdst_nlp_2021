@@ -28,15 +28,18 @@ print(df_all.head(3))
 options = ['MWS']
 df = df_all.loc[df_all['author'].isin(options)]
 
-# fetch MWS data only
+# fetch author data
+def makeauthorfile(options) :
+  df_author = df_all.drop(df_all[~df_all['author'].isin(options)].index)
+  df_author.drop(columns = ["id", "author"], inplace = True)
+  df_author.reset_index(inplace = True)
+  df_author.drop(columns = ["index"], inplace = True)
+  #print(df_author.head())
+  df_author.to_csv('authorfile.txt')
+  authorfile = open('authorfile.txt').read()
+  return authorfile
 
-df_MWS = df_all.drop(df_all[df_all.author != "MWS"].index)
-df_MWS.drop(columns = ["id", "author"], inplace = True)
-df_MWS.reset_index(inplace = True)
-df_MWS.drop(columns = ["index"], inplace = True)
-print(df_MWS.head())
-df_MWS.to_csv('MWSfile.txt')
-MWSfile = open('MWSfile.txt').read()
+MWSfile = makeauthorfile(options)
 
 #tokenize words for standardization
 def tokenize_words(input):
@@ -101,3 +104,28 @@ checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only
 desired_callbacks = [checkpoint]
 
 model.fit(X, y, epochs=4, batch_size=256, callbacks=desired_callbacks)
+
+filename = "model_weights_saved.hdf5"
+model.load_weights(filename)
+model.compile(loss='categorical_crossentropy', optimizer='adam')
+
+num_to_char = dict((i, c) for i, c in enumerate(chars))
+
+start = np.random.randint(0, len(x_data) - 1)
+pattern = x_data[start]
+
+# for preview purposes
+print("Random Seed:")
+print("\"", ''.join([num_to_char[value] for value in pattern]), "\"")
+
+for i in range(1000):
+    x = np.reshape(pattern, (1, len(pattern), 1))
+    x = x / float(vocab_len)
+    prediction = model.predict(x, verbose=0)
+    index = np.argmax(prediction)
+    result = num_to_char[index]
+
+    sys.stdout.write(result)
+
+    pattern.append(index)
+    pattern = pattern[1:len(pattern)]
