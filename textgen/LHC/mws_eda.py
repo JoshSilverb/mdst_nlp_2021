@@ -35,7 +35,7 @@ def makeauthorfile(options) :
   df_author.reset_index(inplace = True)
   df_author.drop(columns = ["index"], inplace = True)
   #print(df_author.head())
-  df_author.to_csv('authorfile.txt')
+  df_author.to_csv('authorfile.txt',index=False)
   authorfile = open('authorfile.txt').read()
   return authorfile
 
