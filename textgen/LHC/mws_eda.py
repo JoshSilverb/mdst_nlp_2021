@@ -99,12 +99,14 @@ model.add(Dense(y.shape[1], activation='softmax'))
 
 model.compile(loss='categorical_crossentropy', optimizer='adam')
 
+#Saved as filepath
 filepath = "model_weights_saved.hdf5"
 checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
 desired_callbacks = [checkpoint]
 
 model.fit(X, y, epochs=4, batch_size=256, callbacks=desired_callbacks)
 
+#Loads file name
 filename = "model_weights_saved.hdf5"
 model.load_weights(filename)
 model.compile(loss='categorical_crossentropy', optimizer='adam')

@@ -16,3 +16,5 @@ Batch size (seq len)
 One hot-encoding the inputs
 Padding input sequences
 
+Model checkpoint
+
