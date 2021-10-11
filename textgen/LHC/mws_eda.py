@@ -12,7 +12,10 @@ import numpy as np
 import pandas as pd 
 import sys
 from nltk.tokenize import RegexpTokenizer
-from nltk.corpus import stopwords 
+from nltk.corpus import stopwords
+import tensorflow
+from tensorflow import keras
+from tensorflow.keras.optimizers import Adam
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, LSTM
 from keras.utils import np_utils
@@ -22,7 +25,7 @@ import nltk
 nltk.download('stopwords')
 import pickle
 
-optimizer = keras.optimizers.Adam(lr=0.01)
+optimizer = keras.optimizers.Adam(learning_rate=0.001)
 
 # read in the training dataset
 url = "https://raw.githubusercontent.com/JoshSilverb/mdst_nlp_2021/master/data/train.csv"
@@ -109,7 +112,7 @@ desired_callbacks = [checkpoint]
 model.fit(X, y, epochs=4, batch_size=256, callbacks=desired_callbacks)
 
 #Chage learning rate mid training
-#K.set_value(model.optimizer.learning_rate, 0.001)
+#K.set_value(model.optimizer.learning_rate, 0.0001)
 #model.fit(X, y, epochs=4, batch_size=256, callbacks=desired_callbacks)
 
 #Loads file name
