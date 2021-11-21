@@ -5,13 +5,49 @@ from tensorflow.keras.layers.experimental import preprocessing
 import numpy as np
 import os
 import time
+import pandas as pd
+import keras
+import matplotlib.pyplot as plt
+import nltk
+import re
+from nltk.corpus import words, wordnet
+nltk.download('words')
+nltk.download('wordnet')
 
-def text_from_ids(ids):
-  return tf.strings.reduce_join(chars_from_ids(ids), axis=-1)
+url = "https://raw.githubusercontent.com/JoshSilverb/mdst_nlp_2021/master/data/train.csv"
+df_all = pd.read_csv(url)
+options = ['MWS']
+df = df_all.loc[df_all['author'].isin(options)]
 
-path_to_file = tf.keras.utils.get_file('shakespeare.txt', 'https://storage.googleapis.com/download.tensorflow.org/data/shakespeare.txt')
+def addemoji(text) :
+  text = text[1:-1]
+  text += '😂'
+  return text
 
-text = open(path_to_file, 'rb').read().decode(encoding='utf-8')
+# fetch author data
+def makeauthorfile(options) :
+  df_author = df_all.drop(df_all[~df_all['author'].isin(options)].index)
+  df_author.drop(columns = ["id", "author"], inplace = True)
+  df_author.reset_index(inplace = True)
+  df_author.drop(columns = ["index"], inplace = True)
+  #df_author.apply(addemoji)
+  #print(df_author.head())
+  df_author.to_csv('authorfile.txt',index=False)
+  authorfile = open('authorfile.txt').read()
+  return authorfile
+
+text = makeauthorfile(options)
+
+'''text_file = makeauthorfile(options)
+text = text_file.read()
+text = text.replace('\n', '')
+lines = text.split(".")
+lines = list(map(str.strip, lines))
+
+lines.append('\n'.join([line + '😂 \n' for line in lines]))
+#text.write('\n'.join([line + '#' for line in lines]))
+text = ' '.join(lines)'''
+
 # length of text is the number of characters in it
 print(f'Length of text: {len(text)} characters')
 vocab = sorted(set(text))
@@ -43,9 +79,8 @@ def split_input_target(sequence):
     return input_text, target_text
 
 dataset = sequences.map(split_input_target)
-
 # Batch size
-BATCH_SIZE = 64
+BATCH_SIZE = 100
 
 # Buffer size to shuffle the dataset
 # (TF data is designed to work with possibly infinite sequences,
@@ -58,6 +93,11 @@ dataset = (
     .shuffle(BUFFER_SIZE)
     .batch(BATCH_SIZE, drop_remainder=True)
     .prefetch(tf.data.experimental.AUTOTUNE))
+
+#dataset_to_numpy = list(dataset.as_numpy_iterator())
+#data_np = np.array(dataset_to_numpy)
+#X_train=data_np[:,0,:,:]
+#Y_train=data_np[:,1,:,:]
 
 # Length of the vocabulary in chars
 vocab_size = len(vocab)
@@ -75,6 +115,9 @@ class MyModel(tf.keras.Model):
     self.gru = tf.keras.layers.GRU(rnn_units,
                                    return_sequences=True,
                                    return_state=True)
+    self.gru = tf.keras.layers.GRU(rnn_units,
+                                   return_sequences=True,
+                                   return_state=True)
     self.dense = tf.keras.layers.Dense(vocab_size)
 
   def call(self, inputs, states=None, return_state=False, training=False):
@@ -89,16 +132,14 @@ class MyModel(tf.keras.Model):
       return x, states
     else:
       return x
-
 model = MyModel(
     # Be sure the vocabulary size matches the `StringLookup` layers.
     vocab_size=len(ids_from_chars.get_vocabulary()),
     embedding_dim=embedding_dim,
     rnn_units=rnn_units)
-
+#model = keras.models.load_model("model20e.H5")
 loss = tf.losses.SparseCategoricalCrossentropy(from_logits=True)
-model.compile(optimizer='adam', loss=loss)
-
+model.compile(optimizer='adam',loss=loss,metrics=['accuracy'])
 # Directory where the checkpoints will be saved
 checkpoint_dir = './training_checkpoints'
 # Name of the checkpoint files
@@ -108,9 +149,11 @@ checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
     filepath=checkpoint_prefix,
     save_weights_only=True)
 
-EPOCHS = 20
-history = model.fit(dataset, epochs=EPOCHS, callbacks=[checkpoint_callback])
-model.save('model.H5')
+EPOCHS = 50
+history = model.fit(dataset,epochs=EPOCHS, callbacks=[checkpoint_callback])
+plt.plot(history.history['accuracy'],label="Accuracy")
+plt.plot(history.history['loss'],label="Loss")
+plt.legend()
 
 class OneStep(tf.keras.Model):
   def __init__(self, model, chars_from_ids, ids_from_chars, temperature=1.0):
@@ -155,23 +198,47 @@ class OneStep(tf.keras.Model):
 
     # Return the characters and model state.
     return predicted_chars, states
-
 one_step_model = OneStep(model, chars_from_ids, ids_from_chars)
-
-tf.saved_model.save(one_step_model, 'one_step')
-one_step_reloaded = tf.saved_model.load('one_step')
 
 start = time.time()
 states = None
-next_char = tf.constant(['ROMEO:'])
+next_char = tf.constant(["Once "])
 result = [next_char]
+for i in range(5):
+  for n in range(500):
+    next_char, states = one_step_model.generate_one_step(next_char, states=states)
+    if (next_char=='😂'):
+      break
+    result.append(next_char)
 
-for n in range(1000):
+'''for n in range(1000):
   next_char, states = one_step_model.generate_one_step(next_char, states=states)
-  result.append(next_char)
+  result.append(next_char)'''
 
 result = tf.strings.join(result)
 end = time.time()
 print(result[0].numpy().decode('utf-8'), '\n\n' + '_'*80)
 print('\nRun time:', end - start)
 
+#Check Percent Words
+if not isinstance(result, str):
+  result = result[0].numpy().decode('utf-8')
+result.replace('; ', ', ')
+wordslist = result.split(" ")
+pattern = r'[^A-Za-z0-9]+'
+numwords = 0
+numnotwords = 0
+notwords = []
+for word in wordslist:
+  word = re.sub(pattern, '', word)
+  if (word.lower() in words.words()) or wordnet.synsets(word.lower()):
+    numwords += 1
+  else:
+    numnotwords += 1
+    notwords.append(word)
+
+print('Percent real words: '+str(100*numwords/(numwords+numnotwords)))
+for word in notwords:
+  print(word+'.')
+
+tf.saved_model.save(one_step_model, 'one_step')
