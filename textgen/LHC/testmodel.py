@@ -13,9 +13,9 @@ from nltk.corpus import words, wordnet
 nltk.download('words')
 nltk.download('wordnet')
 
-one_step_reloaded = tf.saved_model.load('./one_step')
+one_step_reloaded = tf.saved_model.load('./one_step500')
 os.system('cls' if os.name == 'nt' else 'clear')
-starting = input("Enter starting string:")
+starting = input("Enter starting string: ")
 start = time.time()
 states = None
 next_char = tf.constant([starting])
@@ -23,7 +23,7 @@ result = [next_char]
 for i in range(5):
   for n in range(500):
     next_char, states = one_step_reloaded.generate_one_step(next_char, states=states)
-    if (next_char=='😂'):
+    if (next_char=='#'):
       break
     result.append(next_char)
 

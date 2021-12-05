@@ -21,7 +21,7 @@ df = df_all.loc[df_all['author'].isin(options)]
 
 def addemoji(text) :
   text = text[1:-1]
-  text += '😂'
+  text += '#'
   return text
 
 # fetch author data
@@ -44,7 +44,7 @@ text = text.replace('\n', '')
 lines = text.split(".")
 lines = list(map(str.strip, lines))
 
-lines.append('\n'.join([line + '😂 \n' for line in lines]))
+lines.append('\n'.join([line + '# \n' for line in lines]))
 #text.write('\n'.join([line + '#' for line in lines]))
 text = ' '.join(lines)'''
 
@@ -207,7 +207,7 @@ result = [next_char]
 for i in range(5):
   for n in range(500):
     next_char, states = one_step_model.generate_one_step(next_char, states=states)
-    if (next_char=='😂'):
+    if (next_char=='#'):
       break
     result.append(next_char)
 
